@@ -1,23 +1,28 @@
-"""LSTM model for next-day closing price prediction."""
+"""
+LSTM that predicts next-day log returns rather than raw prices.
+
+Why returns: a price-level model can score a low error just by echoing
+yesterday's price (version 1 of this project showed exactly that). Returns
+remove the trend and the level, so the model has to predict the actual
+move, which is the part that matters for a trading decision.
+"""
+from __future__ import annotations
+
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 
 
 def make_sequences(values: np.ndarray, lookback: int):
     """
-    Turn a 1D array of scaled prices into (X, y) windows:
-    X[i] = values[i : i+lookback], y[i] = values[i+lookback]
-    Returns X of shape (n, lookback, 1) and y of shape (n,), plus the
-    index (into `values`) of each target so callers can map back to dates.
+    Turn a 1D array into (X, y) windows:
+    X[i] = values[i - lookback : i], y[i] = values[i]
+    Also returns the index (into `values`) of each target.
     """
     X, y, target_idx = [], [], []
     for i in range(lookback, len(values)):
         X.append(values[i - lookback:i])
         y.append(values[i])
         target_idx.append(i)
-    X = np.array(X).reshape(-1, lookback, 1)
-    y = np.array(y)
-    return X, y, np.array(target_idx)
+    return np.array(X).reshape(-1, lookback, 1), np.array(y), np.array(target_idx)
 
 
 def build_lstm(lookback: int):
@@ -26,9 +31,9 @@ def build_lstm(lookback: int):
 
     model = keras.Sequential([
         layers.Input(shape=(lookback, 1)),
-        layers.LSTM(50, return_sequences=True),
+        layers.LSTM(32, return_sequences=True),
         layers.Dropout(0.2),
-        layers.LSTM(50),
+        layers.LSTM(32),
         layers.Dropout(0.2),
         layers.Dense(1),
     ])
@@ -36,42 +41,38 @@ def build_lstm(lookback: int):
     return model
 
 
-def train_lstm_and_predict(close_prices: np.ndarray, n_train: int, lookback: int = 60,
-                            epochs: int = 40, batch_size: int = 32, seed: int = 42):
+def train_lstm_and_predict(log_returns: np.ndarray, train_end: int, test_end: int,
+                           lookback: int = 60, epochs: int = 40, batch_size: int = 32,
+                           seed: int = 42):
     """
-    close_prices: full chronological array of closing prices (train+test).
-    n_train: number of rows (from the start) that belong to the train split.
-    Returns: predicted prices (aligned to test targets), the target indices
-    (into close_prices) they correspond to, and the fitted model/scaler.
+    Train on targets before `train_end`, predict targets in [train_end, test_end).
+
+    log_returns: chronological array of daily log returns.
+    Standardization uses training-period mean and std only, so nothing about
+    the test period leaks into training. Test inputs are past realized
+    returns, the same information a trader would have that morning.
+
+    Returns the predicted log returns and the indices they correspond to.
     """
     import tensorflow as tf
-    tf.random.set_seed(seed)
-    np.random.seed(seed)
+    from tensorflow.keras.callbacks import EarlyStopping
 
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    train_prices = close_prices[:n_train].reshape(-1, 1)
-    scaler.fit(train_prices)
+    tf.keras.utils.set_random_seed(seed)
 
-    scaled_all = scaler.transform(close_prices.reshape(-1, 1)).flatten()
+    train_vals = log_returns[:train_end]
+    mu, sd = train_vals.mean(), train_vals.std()
+    z = (log_returns[:test_end] - mu) / sd
 
-    X_all, y_all, target_idx = make_sequences(scaled_all, lookback)
-
-    # a target belongs to train if its index is < n_train, else test
-    train_mask = target_idx < n_train
-    test_mask = ~train_mask
-
-    X_train, y_train = X_all[train_mask], y_all[train_mask]
-    X_test = X_all[test_mask]
-    test_target_idx = target_idx[test_mask]
+    X, y, idx = make_sequences(z, lookback)
+    train_mask = idx < train_end
+    test_mask = idx >= train_end
 
     model = build_lstm(lookback)
-    from tensorflow.keras.callbacks import EarlyStopping
-    es = EarlyStopping(monitor="loss", patience=5, restore_best_weights=True)
+    # validation_split takes the LAST 10% of the training windows (before
+    # shuffling), so early stopping is judged on the most recent unseen data.
+    es = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
+    model.fit(X[train_mask], y[train_mask], epochs=epochs, batch_size=batch_size,
+              validation_split=0.1, shuffle=True, verbose=0, callbacks=[es])
 
-    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
-              verbose=0, callbacks=[es], shuffle=True)
-
-    pred_scaled = model.predict(X_test, verbose=0).flatten()
-    pred_prices = scaler.inverse_transform(pred_scaled.reshape(-1, 1)).flatten()
-
-    return pred_prices, test_target_idx, model, scaler
+    pred_z = model.predict(X[test_mask], verbose=0).flatten()
+    return pred_z * sd + mu, idx[test_mask]

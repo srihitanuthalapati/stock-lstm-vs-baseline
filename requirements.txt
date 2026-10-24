@@ -1,6 +1,7 @@
 yfinance
 tensorflow-cpu
 scikit-learn
+scipy
 pandas
 numpy
 matplotlib

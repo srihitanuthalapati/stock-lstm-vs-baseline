@@ -1,98 +1,68 @@
-# Stock Price Prediction: LSTM vs. Naive Baselines
+# PricePredictor: Does an LSTM Actually Predict Stock Moves?
 
-An LSTM neural network trained to predict next-day AAPL closing prices,
-benchmarked against two intentionally dumb baselines — and a backtest that
-checks whether the model's predictions would actually be worth trading on.
+Most stock-prediction LSTM projects stop at a chart where the predicted line hugs the actual line. This project asks the harder question: does the model have real, repeatable skill on data it has never seen, and would that skill survive trading costs?
 
-**The finding:** the LSTM's price predictions look reasonable on a chart,
-but they're 98.9% correlated with simply guessing "tomorrow = today," its
-error is *worse* than that trivial guess (RMSE 6.38 vs. 1.72), and its
-directional accuracy (49.5%) is statistically a coin flip. A backtest of a
-simple trading rule built on its signal lost money over the test period
-while buy-and-hold gained +19%. This is the classic failure mode of
-applying price-level LSTMs to markets, and this repo measures it directly
-instead of asserting it.
+**Full results:** [`results/RESULTS.md`](results/RESULTS.md) (generated automatically by `main.py`, so the numbers always match the code), with full detail in [`results/metrics.json`](results/metrics.json).
 
-## Results (real, computed — not illustrative)
+## The finding
 
-Test set: 461 trading days, AAPL, 2014-05-01 to 2016-02-29 (last 20% of a
-2,305-day chronological split; the LSTM never sees test-period data during
-training or scaling).
+Across five tickers and four out-of-sample years (October 2022 to October 2026), the LSTM shows no real predictive skill once you compare it to the right baseline.
 
-| Model | RMSE ($) | MAE ($) | MAPE | Directional accuracy |
-|---|---|---|---|---|
-| Naive ("tomorrow = today") | 1.72 | 1.27 | 1.16% | 0.0%* |
-| 5-day moving average | 2.40 | 1.85 | 1.71% | 50.8% |
-| LSTM | 6.38 | 5.79 | 5.21% | 49.5% |
+At first glance it looks good. On JPM and SPY it called the direction correctly 55.6% and 54.2% of the time, which is statistically significant against a coin flip (p < 0.01). But those years were a bull market, and simply guessing "up" every day was right 56.9% and 55.4% of the time. **The LSTM's directional accuracy was below the always-up baseline on all five tickers**, and none of its results beat that baseline with any significance (p ≥ 0.68). Its information coefficient ranged from −0.04 to 0.04, meaning its predicted returns barely relate to actual returns.
 
-\* Structural, not a flaw: the naive baseline predicts *zero* change every
-day, so it can never be credited with correctly calling a direction. It
-still gets the lowest price error, because on any given day the stock
-rarely moves far from where it closed yesterday — which is exactly the
-trap: low price error does not mean useful predictions.
+| Ticker | LSTM accuracy | Always-up accuracy | IC |
+|---|---|---|---|
+| AAPL | 50.8% | 54.2% | −0.037 |
+| MSFT | 51.2% | 53.1% | 0.008 |
+| JPM | 55.6% | 56.9% | −0.003 |
+| XOM | 52.8% | 53.5% | 0.040 |
+| SPY | 54.2% | 55.4% | 0.040 |
 
-**LSTM predictions vs. the naive baseline:** correlation = 0.989. The
-model isn't finding independent signal — it's producing a smoothed, lagged
-version of "yesterday's price," just with more error than copying it
-directly would have.
+The backtest tells the same story. After costs, the LSTM signal trailed buy-and-hold on total return for four of five tickers (for example, +57% vs. +156% on AAPL). It beat buy-and-hold only on XOM (+128% vs. +105%), and since its XOM predictions were still no better than always guessing up, one win out of five is consistent with luck. The LSTM did usually have smaller drawdowns, but only because it sat in cash 7% to 27% of the time.
 
-**Backtest** ($10,000 hypothetical starting balance, same test period, no
-fees/slippage modeled — see [Notes and limitations](#notes-and-limitations)):
+The takeaway: a model can look significantly better than random while adding nothing beyond the market's upward drift. Testing against the right baseline is what separates the two.
 
-| Strategy | Final equity | Return |
-|---|---|---|
-| Buy and hold | $11,904.24 | +19.04% |
-| LSTM-signal (long when model predicts up) | $9,931.59 | −0.68% |
+## Version 1: the price-level trap
 
-Plots: [`results/plots/predictions_vs_actual.png`](results/plots/predictions_vs_actual.png),
-[`results/plots/backtest_equity_curve.png`](results/plots/backtest_equity_curve.png).
-Full numbers: [`results/metrics.json`](results/metrics.json).
+The first version trained an LSTM on raw AAPL closing prices and tested it on April 2024 to August 2026. Its predictions were 98.8% correlated with simply guessing "tomorrow = today," its directional accuracy was 43.3% (worse than a coin flip), and a trading rule built on its signal lost 6.2% while buy-and-hold gained 89.2%. A model trained on price levels mostly learns to echo yesterday's price, so it looks accurate on a chart while having no useful signal.
+
+## Version 2: a fairer, harder test
+
+Version 2 fixes the ways version 1 could flatter or mislead:
+
+- **Predicts returns, not prices.** The LSTM forecasts the next day's log return from the previous 60 days of returns, so it can't score well by copying yesterday's price.
+- **Walk-forward validation.** Instead of one train/test split, each ticker is tested over four consecutive out-of-sample years. For each year the model is retrained on all data before it, then predicts that year one day at a time, the way it would be used in real life.
+- **Multiple tickers.** AAPL, MSFT, JPM, XOM and SPY, so a result can't come from one lucky stock.
+- **Statistical significance against the right bar.** Directional accuracy gets a one-sided binomial test against a coin flip and against an "always up" baseline. The second test matters: in a rising market more than half of days are up days, so a model that leans bullish beats 50% with no skill at all.
+- **Information coefficient.** The rank correlation between predicted and actual returns, the standard quant measure of signal quality.
+- **Realistic backtest.** 5 basis points of cost every time the strategy switches between stock and cash, with Sharpe ratio and max drawdown reported alongside total return.
+
+Every model (naive "tomorrow = today," 5-day moving average, LSTM) is scored on exactly the same out-of-sample days.
 
 ## How it works
 
-1. **Data** (`src/fetch_data.py`) — daily AAPL closes. Tries a live
-   `yfinance` download first; if that's unavailable it falls back to a
-   bundled historical CSV (`data/AAPL_2007-01-03_2016-02-29.csv`, sourced
-   from Yahoo Finance via the public `plotly/datasets` repo) so the
-   pipeline always runs.
-2. **Baselines** (`src/baseline.py`) — naive lag-1 and a 5-day trailing
-   moving average, both computed without looking ahead.
-3. **LSTM** (`src/model.py`) — a 2-layer LSTM (50 units each, dropout 0.2)
-   over 60-day lookback windows of MinMax-scaled prices. The scaler is fit
-   on the training split only, so there's no leakage from test-period
-   prices.
-4. **Metrics** (`src/metrics.py`) — RMSE, MAE, MAPE, directional accuracy,
-   and the lag-similarity check, all computed identically for every model
-   over the same test-period targets.
-5. **Backtest** (`src/backtest.py`) — a simple daily long/cash rule driven
-   by each model's signal, compared to buy-and-hold.
+1. **Data** (`src/fetch_data.py`): daily adjusted closes from `yfinance`, with a bundled AAPL CSV (2007 to 2016) as an offline fallback.
+2. **Baselines** (`src/baseline.py`): naive lag-1 and a 5-day trailing average, neither of which can see the day it predicts.
+3. **LSTM** (`src/model.py`): two LSTM layers (32 units, 0.2 dropout) over 60-day windows of standardized returns. Standardization uses training-period statistics only, and early stopping is judged on the most recent 10% of the training data.
+4. **Metrics** (`src/metrics.py`): RMSE, MAE, MAPE, directional accuracy with p-value, and information coefficient.
+5. **Backtest** (`src/backtest.py`): long the stock on days the model predicts up, cash otherwise, net of costs.
+6. **Pipeline** (`main.py`): runs the walk-forward loop and writes `results/metrics.json`, `results/RESULTS.md`, and the plots in `results/plots/`.
 
-Run it yourself:
+## Run it
 
 ```bash
 pip install -r requirements.txt
 python3 main.py
 ```
 
-Outputs land in `results/` (`metrics.json` and `plots/`).
+The full run trains 20 models and takes a while on a laptop CPU. For a quick check:
+
+```bash
+python3 main.py --tickers AAPL --folds 2 --epochs 10
+```
 
 ## Notes and limitations
 
-- The backtest is a hypothetical simulation only — no real account, no
-  real trades, no fees or slippage. It exists to answer "would this
-  signal have been worth anything," not as a trading system.
-- The bundled fallback dataset ends in Feb 2016. Swap in a live
-  `yfinance` range (edit `START`/`END` in `main.py`) for a more recent
-  window when running somewhere with normal internet access — the
-  pipeline and conclusions don't depend on this specific date range.
-- One ticker, one lookback window, one architecture. The point of this
-  project isn't to find a config where the LSTM wins — it's to show a
-  rigorous way to check whether it actually did.
-
-## Why this project
-
-Stock-price LSTM tutorials are common, and most stop at "look, the
-predicted line tracks the actual line." This repo adds the comparison
-that tutorial usually skips: a fair baseline, a lag-similarity check, and
-a backtest — the three questions you'd actually ask before trusting a
-model's predictions with money.
+- The backtest is a paper simulation with no real account or trades. It answers "would this signal have been worth anything," not "how to trade."
+- An LSTM that finds no real pattern tends to predict the average daily return, which is slightly positive, so it ends up long almost every day and its backtest nearly matches buy-and-hold. The "days in market" column makes that visible.
+- One architecture and one feature (past returns). The goal isn't to find a setup where the LSTM wins; it's to measure honestly whether it did.

@@ -1,32 +1,332 @@
 {
-  "naive_lag1": {
-    "rmse": 4.193229176171018,
-    "mae": 2.870385684999534,
-    "mape_pct": 1.2005529378610684,
-    "directional_accuracy_pct": 0.0
+  "AAPL": {
+    "up_day_rate_pct": 54.166666666666664,
+    "naive": {
+      "rmse": 3.618486565836704,
+      "mae": 2.480153416830396,
+      "mape_pct": 1.1595877605558107,
+      "directional_accuracy_pct": 0.0,
+      "p_value_vs_coin_flip": 1.0,
+      "p_value_vs_always_up": 1.0
+    },
+    "ma5": {
+      "rmse": 5.583504206575917,
+      "mae": 4.067434613666837,
+      "mape_pct": 1.8985337433055152,
+      "directional_accuracy_pct": 47.91666666666667,
+      "p_value_vs_coin_flip": 0.9122061297896714,
+      "p_value_vs_always_up": 0.9999691052145361
+    },
+    "always_up": {
+      "rmse": 3.613078279782169,
+      "mae": 2.4682993306432452,
+      "mape_pct": 1.15520463667907,
+      "directional_accuracy_pct": 54.166666666666664,
+      "p_value_vs_coin_flip": 0.004454609059226404,
+      "p_value_vs_always_up": 0.5129560961761914
+    },
+    "lstm": {
+      "rmse": 3.616700444355915,
+      "mae": 2.475304202724785,
+      "mape_pct": 1.1598056790540283,
+      "directional_accuracy_pct": 50.79365079365079,
+      "p_value_vs_coin_flip": 0.31831166233416924,
+      "p_value_vs_always_up": 0.9853070799295858,
+      "information_coefficient": -0.037413491483366645,
+      "directional_accuracy_by_fold_pct": [
+        50.0,
+        52.77777777777778,
+        51.98412698412699,
+        48.41269841269841
+      ]
+    },
+    "backtest": {
+      "lstm_signal": {
+        "total_return_pct": 57.356926331143356,
+        "sharpe": 0.5889764233421032,
+        "max_drawdown_pct": -33.845690025308215,
+        "pct_days_in_market": 81.74603174603175
+      },
+      "buy_and_hold": {
+        "total_return_pct": 156.43224457874166,
+        "sharpe": 1.0144155161337,
+        "max_drawdown_pct": -33.36050384416143
+      },
+      "ma5_signal": {
+        "total_return_pct": 18.865635474432985,
+        "sharpe": 0.31387250951011436,
+        "max_drawdown_pct": -23.484428517808198,
+        "pct_days_in_market": 43.154761904761905
+      }
+    },
+    "test_period": [
+      "2022-10-17",
+      "2026-10-22"
+    ],
+    "test_days": 1008
   },
-  "moving_average_5d": {
-    "rmse": 6.551805739640323,
-    "mae": 4.795293243252237,
-    "mape_pct": 2.0070564878695074,
-    "directional_accuracy_pct": 48.89267461669506
+  "MSFT": {
+    "up_day_rate_pct": 53.07539682539682,
+    "naive": {
+      "rmse": 6.49462616927087,
+      "mae": 4.520195173838782,
+      "mape_pct": 1.184229558933883,
+      "directional_accuracy_pct": 0.0,
+      "p_value_vs_coin_flip": 1.0,
+      "p_value_vs_always_up": 1.0
+    },
+    "ma5": {
+      "rmse": 9.797467640224248,
+      "mae": 7.041162829928927,
+      "mape_pct": 1.8300495826217005,
+      "directional_accuracy_pct": 49.404761904761905,
+      "p_value_vs_coin_flip": 0.6588891425333485,
+      "p_value_vs_always_up": 0.9909773602708275
+    },
+    "always_up": {
+      "rmse": 6.493260046293562,
+      "mae": 4.510702274988568,
+      "mape_pct": 1.182574294909066,
+      "directional_accuracy_pct": 53.07539682539682,
+      "p_value_vs_coin_flip": 0.027318779640154764,
+      "p_value_vs_always_up": 0.512844044635232
+    },
+    "lstm": {
+      "rmse": 6.527469793829935,
+      "mae": 4.539674299099123,
+      "mape_pct": 1.1882711853149608,
+      "directional_accuracy_pct": 51.19047619047619,
+      "p_value_vs_coin_flip": 0.23440906859186927,
+      "p_value_vs_always_up": 0.8907329264975713,
+      "information_coefficient": 0.007936867244311762,
+      "directional_accuracy_by_fold_pct": [
+        56.34920634920635,
+        47.22222222222222,
+        53.17460317460318,
+        48.01587301587302
+      ]
+    },
+    "backtest": {
+      "lstm_signal": {
+        "total_return_pct": 125.94578903191574,
+        "sharpe": 1.0100350353494376,
+        "max_drawdown_pct": -29.450478775612353,
+        "pct_days_in_market": 73.71031746031747
+      },
+      "buy_and_hold": {
+        "total_return_pct": 135.46441579097976,
+        "sharpe": 0.9246432763398232,
+        "max_drawdown_pct": -34.49839756815898
+      },
+      "ma5_signal": {
+        "total_return_pct": 56.89459948332054,
+        "sharpe": 0.7206986949962247,
+        "max_drawdown_pct": -25.145699773268316,
+        "pct_days_in_market": 44.345238095238095
+      }
+    },
+    "test_period": [
+      "2022-10-17",
+      "2026-10-22"
+    ],
+    "test_days": 1008
   },
-  "lstm": {
-    "rmse": 15.28765926331323,
-    "mae": 12.89667078177405,
-    "mape_pct": 5.084064796310191,
-    "directional_accuracy_pct": 43.27086882453152,
-    "lag_similarity_to_naive": 0.9881383066841035
+  "JPM": {
+    "up_day_rate_pct": 56.94444444444444,
+    "naive": {
+      "rmse": 3.31618339629616,
+      "mae": 2.23913754357232,
+      "mape_pct": 1.012467196730638,
+      "directional_accuracy_pct": 0.0,
+      "p_value_vs_coin_flip": 1.0,
+      "p_value_vs_always_up": 1.0
+    },
+    "ma5": {
+      "rmse": 4.710620125675671,
+      "mae": 3.4301508252582855,
+      "mape_pct": 1.5827661809072988,
+      "directional_accuracy_pct": 50.297619047619044,
+      "p_value_vs_coin_flip": 0.4374362467757048,
+      "p_value_vs_always_up": 0.9999904190710242
+    },
+    "always_up": {
+      "rmse": 3.3105898639681333,
+      "mae": 2.2184248964824387,
+      "mape_pct": 1.0029884599198826,
+      "directional_accuracy_pct": 56.94444444444444,
+      "p_value_vs_coin_flip": 5.807025858060612e-06,
+      "p_value_vs_always_up": 0.5132720546967777
+    },
+    "lstm": {
+      "rmse": 3.3108331880725297,
+      "mae": 2.2254564614474215,
+      "mape_pct": 1.0063765470168244,
+      "directional_accuracy_pct": 55.55555555555556,
+      "p_value_vs_coin_flip": 0.00023312744867267686,
+      "p_value_vs_always_up": 0.8218829283323935,
+      "information_coefficient": -0.0026298695091397754,
+      "directional_accuracy_by_fold_pct": [
+        55.952380952380956,
+        59.12698412698413,
+        51.98412698412699,
+        55.158730158730165
+      ]
+    },
+    "backtest": {
+      "lstm_signal": {
+        "total_return_pct": 182.0255120326029,
+        "sharpe": 1.2996817806889827,
+        "max_drawdown_pct": -20.77859526833943,
+        "pct_days_in_market": 92.65873015873017
+      },
+      "buy_and_hold": {
+        "total_return_pct": 232.00929774217275,
+        "sharpe": 1.424905336791287,
+        "max_drawdown_pct": -24.423936760428045
+      },
+      "ma5_signal": {
+        "total_return_pct": 86.82651967164907,
+        "sharpe": 1.059546463793393,
+        "max_drawdown_pct": -14.065885281629619,
+        "pct_days_in_market": 39.285714285714285
+      }
+    },
+    "test_period": [
+      "2022-10-17",
+      "2026-10-22"
+    ],
+    "test_days": 1008
   },
-  "backtest": {
-    "starting_cash": 10000.0,
-    "lstm_signal_final_equity": 9375.89293850895,
-    "buy_and_hold_final_equity": 18919.325816837412,
-    "lstm_signal_return_pct": -6.241070614910493,
-    "buy_and_hold_return_pct": 89.19325816837411,
-    "test_period_start": "2024-04-29",
-    "test_period_end": "2026-08-31",
-    "naive_signal_final_equity": 10000.0,
-    "naive_signal_return_pct": 0.0
+  "XOM": {
+    "up_day_rate_pct": 53.47222222222222,
+    "naive": {
+      "rmse": 1.7685026518256557,
+      "mae": 1.3065126661270383,
+      "mape_pct": 1.1494216160291302,
+      "directional_accuracy_pct": 0.0,
+      "p_value_vs_coin_flip": 1.0,
+      "p_value_vs_always_up": 1.0
+    },
+    "ma5": {
+      "rmse": 2.62193268295366,
+      "mae": 2.0176879519507995,
+      "mape_pct": 1.7677168803129788,
+      "directional_accuracy_pct": 46.92460317460318,
+      "p_value_vs_coin_flip": 0.9764164077945303,
+      "p_value_vs_always_up": 0.9999862283558822
+    },
+    "always_up": {
+      "rmse": 1.7663061367127542,
+      "mae": 1.3027027313368662,
+      "mape_pct": 1.1471712281208417,
+      "directional_accuracy_pct": 53.47222222222222,
+      "p_value_vs_coin_flip": 0.014853857564808436,
+      "p_value_vs_always_up": 0.5128840326694319
+    },
+    "lstm": {
+      "rmse": 1.7683417742183682,
+      "mae": 1.307569931435541,
+      "mape_pct": 1.151133693312666,
+      "directional_accuracy_pct": 52.77777777777778,
+      "p_value_vs_coin_flip": 0.04158126939726119,
+      "p_value_vs_always_up": 0.6822984250757771,
+      "information_coefficient": 0.03993246997212901,
+      "directional_accuracy_by_fold_pct": [
+        55.158730158730165,
+        49.60317460317461,
+        50.79365079365079,
+        55.55555555555556
+      ]
+    },
+    "backtest": {
+      "lstm_signal": {
+        "total_return_pct": 128.26977601244778,
+        "sharpe": 1.0941738728839479,
+        "max_drawdown_pct": -18.578260206663643,
+        "pct_days_in_market": 72.91666666666666
+      },
+      "buy_and_hold": {
+        "total_return_pct": 104.74252355094431,
+        "sharpe": 0.8691351166000213,
+        "max_drawdown_pct": -20.112257210148808
+      },
+      "ma5_signal": {
+        "total_return_pct": 23.35951636131741,
+        "sharpe": 0.4031185302976115,
+        "max_drawdown_pct": -17.84728002288408,
+        "pct_days_in_market": 43.551587301587304
+      }
+    },
+    "test_period": [
+      "2022-10-17",
+      "2026-10-22"
+    ],
+    "test_days": 1008
+  },
+  "SPY": {
+    "up_day_rate_pct": 55.35714285714286,
+    "naive": {
+      "rmse": 5.176124347698727,
+      "mae": 3.635695714799185,
+      "mape_pct": 0.6779227271151244,
+      "directional_accuracy_pct": 0.0,
+      "p_value_vs_coin_flip": 1.0,
+      "p_value_vs_always_up": 1.0
+    },
+    "ma5": {
+      "rmse": 7.305594235629305,
+      "mae": 5.481789755442786,
+      "mape_pct": 1.0228371190621208,
+      "directional_accuracy_pct": 49.60317460317461,
+      "p_value_vs_coin_flip": 0.6115847256227672,
+      "p_value_vs_always_up": 0.9998905112544464
+    },
+    "always_up": {
+      "rmse": 5.164453467822431,
+      "mae": 3.6120977108970513,
+      "mape_pct": 0.6740300211651503,
+      "directional_accuracy_pct": 55.35714285714286,
+      "p_value_vs_coin_flip": 0.0003716605271426647,
+      "p_value_vs_always_up": 0.5130859591988582
+    },
+    "lstm": {
+      "rmse": 5.154693215511633,
+      "mae": 3.62029344275036,
+      "mape_pct": 0.675665206579473,
+      "directional_accuracy_pct": 54.166666666666664,
+      "p_value_vs_coin_flip": 0.004454609059226404,
+      "p_value_vs_always_up": 0.7859313707325252,
+      "information_coefficient": 0.040396749864076195,
+      "directional_accuracy_by_fold_pct": [
+        51.98412698412699,
+        56.74603174603175,
+        56.74603174603175,
+        51.19047619047619
+      ]
+    },
+    "backtest": {
+      "lstm_signal": {
+        "total_return_pct": 88.28048691450341,
+        "sharpe": 1.1670790458673315,
+        "max_drawdown_pct": -17.85591230499043,
+        "pct_days_in_market": 79.26587301587301
+      },
+      "buy_and_hold": {
+        "total_return_pct": 124.87975202237216,
+        "sharpe": 1.390653665891044,
+        "max_drawdown_pct": -18.75523416145789
+      },
+      "ma5_signal": {
+        "total_return_pct": 52.57694627689151,
+        "sharpe": 0.9520062618218028,
+        "max_drawdown_pct": -14.45479636386927,
+        "pct_days_in_market": 39.285714285714285
+      }
+    },
+    "test_period": [
+      "2022-10-17",
+      "2026-10-22"
+    ],
+    "test_days": 1008
   }
 }

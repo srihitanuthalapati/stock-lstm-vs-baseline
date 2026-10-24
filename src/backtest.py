@@ -1,43 +1,56 @@
 """
-A deliberately simple backtest: no real trading, no broker, no fees --
-just a hypothetical starting balance simulated in code from historical
-prices, so the "returns" are a paper simulation you can compute and plot,
-never an instruction to actually place trades.
+A simple paper backtest: no broker, no real trades, just a hypothetical
+starting balance simulated from historical prices.
 
-Rule: each day, if the model predicted the close would be higher than the
-previous actual close, hold the stock that day (capture its return);
-otherwise hold cash (0% that day). Ignores transaction costs and slippage
-on purpose to keep the comparison legible -- a real strategy would need to
-account for both.
+Rule: each day, if the prediction says the close will be higher than the
+previous actual close, hold the stock that day; otherwise hold cash.
+A transaction cost is charged every time the position flips between stock
+and cash, so a signal that trades constantly has to earn its costs.
 """
 import numpy as np
 import pandas as pd
 
+TRADING_DAYS = 252
 
-def simple_signal_backtest(dates, prev_actual, actual, predicted, starting_cash=10_000.0):
+
+def simple_signal_backtest(dates, prev_actual, actual, predicted,
+                           starting_cash=10_000.0, cost_bps=5.0):
     """
-    dates: array-like of the test-period dates (for plotting)
-    prev_actual: previous day's actual close (the decision point)
-    actual: actual close on the predicted day
-    predicted: model's predicted close for that day
     Returns a DataFrame with daily equity for the strategy and for
-    buy-and-hold over the same period.
+    buy-and-hold over the same period, plus the daily position.
+    cost_bps: cost per position change in basis points (5 = 0.05%).
     """
     prev_actual = np.asarray(prev_actual, dtype=float)
     actual = np.asarray(actual, dtype=float)
     predicted = np.asarray(predicted, dtype=float)
+    cost = cost_bps / 10_000
 
-    daily_return = (actual - prev_actual) / prev_actual
-    signal = predicted > prev_actual  # True = go long that day
+    daily_return = actual / prev_actual - 1
+    position = (predicted > prev_actual).astype(float)
+    trades = np.abs(np.diff(position, prepend=0.0))
 
-    strategy_daily_return = np.where(signal, daily_return, 0.0)
-
-    strategy_equity = starting_cash * np.cumprod(1 + strategy_daily_return)
-    buyhold_equity = starting_cash * np.cumprod(1 + daily_return)
+    strategy_return = position * daily_return - trades * cost
+    buyhold_return = daily_return.copy()
+    buyhold_return[0] -= cost
 
     return pd.DataFrame({
         "Date": dates,
-        "strategy_equity": strategy_equity,
-        "buyhold_equity": buyhold_equity,
-        "signal_long": signal,
+        "strategy_return": strategy_return,
+        "buyhold_return": buyhold_return,
+        "strategy_equity": starting_cash * np.cumprod(1 + strategy_return),
+        "buyhold_equity": starting_cash * np.cumprod(1 + buyhold_return),
+        "position": position,
     })
+
+
+def performance_stats(daily_returns):
+    """Total return, annualized Sharpe (risk-free rate 0), and max drawdown."""
+    r = np.asarray(daily_returns, dtype=float)
+    equity = np.cumprod(1 + r)
+    sd = r.std()
+    drawdown = equity / np.maximum.accumulate(equity) - 1
+    return {
+        "total_return_pct": float((equity[-1] - 1) * 100),
+        "sharpe": float(r.mean() / sd * np.sqrt(TRADING_DAYS)) if sd > 0 else 0.0,
+        "max_drawdown_pct": float(drawdown.min() * 100),
+    }
