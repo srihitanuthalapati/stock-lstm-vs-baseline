@@ -1,0 +1,6 @@
+yfinance
+tensorflow-cpu
+scikit-learn
+pandas
+numpy
+matplotlib

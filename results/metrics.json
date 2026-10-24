@@ -1,0 +1,32 @@
+{
+  "naive_lag1": {
+    "rmse": 4.193229176171018,
+    "mae": 2.870385684999534,
+    "mape_pct": 1.2005529378610684,
+    "directional_accuracy_pct": 0.0
+  },
+  "moving_average_5d": {
+    "rmse": 6.551805739640323,
+    "mae": 4.795293243252237,
+    "mape_pct": 2.0070564878695074,
+    "directional_accuracy_pct": 48.89267461669506
+  },
+  "lstm": {
+    "rmse": 15.28765926331323,
+    "mae": 12.89667078177405,
+    "mape_pct": 5.084064796310191,
+    "directional_accuracy_pct": 43.27086882453152,
+    "lag_similarity_to_naive": 0.9881383066841035
+  },
+  "backtest": {
+    "starting_cash": 10000.0,
+    "lstm_signal_final_equity": 9375.89293850895,
+    "buy_and_hold_final_equity": 18919.325816837412,
+    "lstm_signal_return_pct": -6.241070614910493,
+    "buy_and_hold_return_pct": 89.19325816837411,
+    "test_period_start": "2024-04-29",
+    "test_period_end": "2026-08-31",
+    "naive_signal_final_equity": 10000.0,
+    "naive_signal_return_pct": 0.0
+  }
+}
